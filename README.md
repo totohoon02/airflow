@@ -271,7 +271,7 @@ get_data >> extract_gz >> fetch_pageviews >> create_table >> write_to_postgres
 
 - CLI 혹은 Airflow에서 Connection 추가
 
-![image.png](./readme_images/dag_postgres.png.png)
+![image.png](./readme_images/dag_postgres.png)
 
 - 이렇게 하면
   1. Wiki에서 데이터 받아와서
