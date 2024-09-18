@@ -2,7 +2,12 @@
 
 ---
 
-데이터 파이프라인 구성 도구
+## Airflow
+
+- 파이썬 코드를 이용한 유연한 파이프라인 정의
+- 스케줄링
+- 모니터링과 실패 처리
+- 실시간 데이터에는 적합하지 않다
 
 ### 데이터 파이프라인
 
@@ -22,14 +27,7 @@
     - 판메 데이터 → 정제
       - 데이터 세트 결합
 
-## Airflow
-
-- 파이썬 코드를 이용한 유연한 파이프라인 정의
-- 스케줄링
-- 모니터링과 실패 처리
-- 실시간 데이터에는 적합하지 않다
-
-## DAG 구조
+### Install
 
 ### DATA
 
@@ -122,6 +120,8 @@ download_launches >> get_pictures >> notify
 
 - start_date부터 필요한 실행 시점까지 자동 실행
 - 실패 시 실패한 태스크 Clear하면 해당 태스크부터 자동 실행된다.
+
+## Airflow 기능
 
 ### 스케줄링
 
@@ -271,7 +271,7 @@ get_data >> extract_gz >> fetch_pageviews >> create_table >> write_to_postgres
 
 - CLI 혹은 Airflow에서 Connection 추가
 
-![image.png](./readme_images/dag_postgres.png)
+![image.png](./readme_images/image.png)
 
 - 이렇게 하면
   1. Wiki에서 데이터 받아와서
@@ -286,7 +286,7 @@ get_data >> extract_gz >> fetch_pageviews >> create_table >> write_to_postgres
 
 ### 선형 체인 의존성 - 팬인, 팬아웃 구조
 
-![image.png](./readme_images/stc1.png)
+![image.png](/readme_images/image%201.png)
 
 ```python
 start >> [print1_1, print2_1]
@@ -297,7 +297,7 @@ print2_1 >> print2_2
 
 ### 브랜치
 
-![image.png](./readme_images/stc2.png)
+![image.png](/readme_images/image%202.png)
 
 ```python
 def _pick_branch(stage):
@@ -419,3 +419,72 @@ task_builder()
 - @task() 안에 옵션 줄 수 있다.
 - 리턴 값은 알아서 xcom에 들어간다
 - 반환 값이랑 태스크 주는게 조금 이상하긴 한데 저렇게 하면 된다.
+
+## 워크플로 트리거
+
+### 태스크의 결과에 따라서 트리깅
+
+```python
+@dag(
+    dag_id="06_02_file_sensor",
+    concurrency=50,  # 동시 실행 태스크 수 제한
+)
+def task_builder():
+    @task()
+    def start():
+        pass
+
+    @task.sensor(poke_interval=5)
+    def wait_for_data(data_id):
+        file_path = Path("/tmp/data/data2.txt")
+        return file_path.exists()
+
+    @task()
+    def end():
+        pass
+
+    start() >> sensor_task >> end()
+
+task_builder()
+```
+
+- `@task.sensor`에서 `data2.txt`가 존재할 때 까지 5초마다 poke를 보낸다.
+- `data2.txt`가 존재하면 다음 태스크로 진행
+- `/tmp`→ 기본 디렉터리 tmp 아님! `cd /tmp` 로 들어가야함
+
+### 다른 DAG를 트리거하기
+
+```python
+
+trigger_another_dag = TriggerDagRunOperator(
+    task_id="run_task2",
+    trigger_dag_id="06_02_01_another_dag",
+)
+
+start() >> sensor_task >> end() >> trigger_another_dag
+
+# other file
+@dag(
+    dag_id="06_02_01_another_dag",
+)
+def task_builder2():
+    @task()
+    def start():
+        pass
+
+    @task()
+    def hello():
+        print("world")
+
+    @task()
+    def end():
+        pass
+
+    start() >> hello() >> end()
+
+task_builder2()
+
+```
+
+- dag_id로 다른 DAG를 실행한다.
+- 타겟 DAG가 활성화 되어있어야 한다.
