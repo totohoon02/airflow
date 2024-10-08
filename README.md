@@ -27,9 +27,9 @@
     - 판메 데이터 → 정제
       - 데이터 세트 결합
 
-### Install
+## Installaiton
 
-### DATA
+### Get Sample Data
 
 ```python
 https://ll.thespacedevs.com/2.0.0/launch/upcoming
@@ -37,7 +37,8 @@ https://ll.thespacedevs.com/2.0.0/launch/upcoming
 
 ### Airflow 설치
 
-```python
+```bash
+# project 경로에서 **NOT AT ROOT DIR**
 curl -LfO 'https://airflow.apache.org/docs/apache-airflow/2.10.0/docker-compose.yaml'
 mkdir -p ./dags ./logs ./plugins ./config
 echo -e "AIRFLOW_UID=$(id -u)" > .env
@@ -46,16 +47,17 @@ docker compose up airflow-init
 docker compose up -d
 ```
 
-### 가상환경 설정
+### Virtual Environment
 
-```python
-# python -n .venv venv # 리눅스
-# 윈도우 환경에서는 Vscode에서 생성
+```bash
+# use 'venv'
+python -m venv .venv
+. .venv/bin/activate
 
 pip install apache-airflow
 ```
 
-- 샘플
+- Sample Code
 
 ```python
 import json
